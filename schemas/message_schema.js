@@ -5,7 +5,7 @@ const messageschema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    reciever: {
+    receiver: {
         type: String,
         required: true,
 
@@ -15,9 +15,14 @@ const messageschema = new mongoose.Schema({
         required: true,
     },
     status: {
-        type: String,
+        default: 'unseen',
+        type: String, 
         required: true,
+    },
+    sendtime: {
+        type: Date,
+        default:() => new Date
     }
 })
 
-module.exports = mongoose.model('Messages',messageschema)
+module.exports = mongoose.model('Messages',messageschema)  

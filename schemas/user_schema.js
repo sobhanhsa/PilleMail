@@ -6,11 +6,11 @@ const userschema = new mongoose.Schema({
         required: true
     },
     pass: {
-        type : String,
+        type: String,
         required: true
     },
     email: {
-        type : String,
+        type: String,
         required: true,
         lowercase: true
     }

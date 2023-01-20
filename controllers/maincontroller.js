@@ -1,5 +1,4 @@
 const userschema = require('../schemas/user_schema.js')
-const messageschema = require('../schemas/message_schema')
 const mongoose = require('mongoose')
 const emailValidator = require('../validators/emailvalidator.js')
 const { accessTokenMaker, TokenAuthenticator } = require('../validators/tokenvalidator')
@@ -10,11 +9,15 @@ mongoose.connect('mongodb://localhost/emailapp', () => console.log("db connected
 mongoose.set('strictQuery', true)
 
 
-userfinder()
+// userfinder()
 
 async function userfinder(){
-    users = await messageschema.find({})
+    users = await userschema.find({})
     console.log(users)
+}
+//returns corrected email
+function emailCorrection(initemail) {
+    return initemail.split('@')[0] + "@pillemail.com"
 }
 
 const signUpFunc = async (req, res) => {
@@ -36,16 +39,21 @@ const signUpFunc = async (req, res) => {
     if (!isEmailValid) {
         return res.send("your email is not valid")
     }
+    //add @pillemail
+    const correctemail = emailCorrection(userdata.email)
     //checkment by according to db
     const dbusers = await userschema.find({})
-    const repetitiveEmail = dbusers.find((item) => item.email === userdata.email)
-    //console.log(isEmailValid)
+    const repetitiveEmail = dbusers.find((item) => item.email === correctemail)
     if (repetitiveEmail) {
         return res.send("repetitive email please change it")
     }
     else {
-        await userschema.create({ name: userdata.name, pass: String(userdata.pass), email: userdata.email })
-        return res.send(`your email acc created and your token is ${accessTokenMaker(userdata.email)}`)
+        //emailcorrection
+        await userschema.create({
+            name: userdata.name, pass: String(userdata.pass),
+            email: correctemail
+        })
+        return res.send(`your email acc created and your token is ${accessTokenMaker(correctemail)}`)
     }
 }
 const loginFunc = async (req, res) => {
@@ -55,7 +63,6 @@ const loginFunc = async (req, res) => {
     const tokenstatus = TokenAuthenticator(token)
     if (tokenstatus) {
         const currentuser = await userschema.findOne({ email: tokenstatus })
-        console.log(currentuser)
         return res.send("wellcome " + currentuser.name)
     }
     //manual checkment  
