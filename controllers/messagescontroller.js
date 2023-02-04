@@ -1,9 +1,21 @@
 const message_schema = require('../schemas/message_schema')
 const user_schema = require('../schemas/user_schema')
 const mongoose = require('mongoose')
-
-mongoose.connect('mongodb://localhost/emailapp')
-// test()
+//DB connect options
+const options = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000,
+    autoIndex: false, // Don't build indexes
+    maxPoolSize: 10, // Maintain up to 10 socket connections
+    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    family: 6// Use IPv4, skip trying IPv6
+}
+mongoose.connect('mongodb://localhost:27017/emailapp',options).catch(erorr => console.log(erorr.message))
+mongoose.set('strictQuery', true)
+ 
+// test() 
 async function test() {
     await message_schema.create({
         sender: "sobhan@pillemail.com",
@@ -17,8 +29,9 @@ const unreadMsgFilter = (arr) => {
         if (msg.status === 'unread') return msg
     })
 }
+//ip conrtoller
 const inboxFunc = async (req, res) => {
-    //witch group of msg user requested
+    //witch group of msg user requested ** finding with according to ipaddress
     const msglist = req.query.list
     //get user information
     const currentuser = req.body
@@ -37,13 +50,14 @@ const inboxFunc = async (req, res) => {
             .updateMany({ status: 'seen' })
         return
     }
+    //while user query is sended msg that user send
     if (msglist === 'sendedmsg') {
         return res.json({
             sendedmessages: usermessages.filter((msg) => {
                 if (msg.sender === currentuser.email) {
                     return msg
                 }
-            })
+            }) 
         })
     }
     if (!msglist) return res.json({ allmessages: usermessages })
@@ -57,8 +71,8 @@ const sendFunc = async (req, res) => {
     //do we have this receiver in db
     if(await user_schema.exists({email: receiver})) {
         await message_schema.create({
-            sender: req.body.email,
-            text: msgtext,
+            sender: sender,
+            msgtext: msgtext,
             receiver: receiver
         })
         return res.send("your message successfully sended")
